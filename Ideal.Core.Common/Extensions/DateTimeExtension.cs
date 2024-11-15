@@ -1,6 +1,4 @@
-﻿using System;
-using System.Globalization;
-using static System.Runtime.InteropServices.JavaScript.JSType;
+﻿using System.Globalization;
 
 namespace Ideal.Core.Common.Extensions
 {
@@ -350,7 +348,7 @@ namespace Ideal.Core.Common.Extensions
         /// <returns>是否周末</returns>
         public static bool IsWeekend(this DateTime dateTime)
         {
-            return dateTime.DayOfWeek == DayOfWeek.Saturday || dateTime.DayOfWeek == DayOfWeek.Sunday;
+            return dateTime.DayOfWeek is DayOfWeek.Saturday or DayOfWeek.Sunday;
         }
 
         /// <summary>
@@ -520,7 +518,7 @@ namespace Ideal.Core.Common.Extensions
         /// <returns>1，2，3，4</returns>
         public static int GetQuarter(this DateTime dateTime)
         {
-            return (dateTime.Month - 1) / 3 + 1;
+            return ((dateTime.Month - 1) / 3) + 1;
         }
 
         /// <summary>
@@ -531,7 +529,7 @@ namespace Ideal.Core.Common.Extensions
         public static DateTime GetFirstDayDateTimeOfQuarter(this DateTime dateTime)
         {
             //计算当前日期所在季度的起始月
-            var firstMonth = (dateTime.Month - 1) / 3 * 3 + 1;
+            var firstMonth = ((dateTime.Month - 1) / 3 * 3) + 1;
             return new DateTime(dateTime.Year, firstMonth, 1, 0, 0, 0, 0, DateTimeKind.Local);
         }
 
