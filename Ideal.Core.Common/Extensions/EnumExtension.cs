@@ -22,18 +22,22 @@ namespace Ideal.Core.Common.Extensions
         public static TEnum? ToEnumByName<TEnum>(this string name)
             where TEnum : struct, Enum
         {
-            //如果为整数类型字符串，则直接返回空
-            if (int.TryParse(name, out _))
-            {
-                //返回空
-                return default;
-            }
-
             //转换成功则返回结果，否则返回空
             if (Enum.TryParse<TEnum>(name, out var result))
             {
-                //返回枚举
-                return result;
+                //检查是否为有效的枚举名称字符串，
+                if (Enum.IsDefined(typeof(TEnum), name))
+                {
+                    //返回枚举
+                    return result;
+                }
+                else
+                {
+                    //计算是否为有效的位标志组合项
+                    var isValidFlags = IsValidFlagsMask<ulong, TEnum>(result.ToEnumValue<ulong>());
+                    //如果是有效的位标志组合项则返回枚举，否则返回空
+                    return isValidFlags ? result : default(TEnum?);
+                }
             }
 
             //返回空
@@ -238,7 +242,7 @@ namespace Ideal.Core.Common.Extensions
             var values = Enum.GetValues(type);
             //记录有效枚举描述个数
             var count = 0;
-            var mask = 0L;
+            ulong mask = 0L;
             //变量枚举所有项
             foreach (var name in names)
             {
@@ -250,7 +254,7 @@ namespace Ideal.Core.Common.Extensions
                         //有效枚举个数加1
                         count++;
                         //将枚举值转为long类型
-                        var valueLong = Convert.ToInt64(value);
+                        var valueLong = Convert.ToUInt64(value);
                         // 过滤掉负数或无效的值，规范的位标志枚举应该都为非负数
                         if (valueLong >= 0)
                         {
@@ -296,11 +300,11 @@ namespace Ideal.Core.Common.Extensions
             }
             else if (underlyingType == typeof(long))
             {
-                return mask.ToEnumByValue<TEnum>();
+                return ((long)mask).ToEnumByValue<TEnum>();
             }
             else if (underlyingType == typeof(ulong))
             {
-                return ((ulong)mask).ToEnumByValue<TEnum>();
+                return mask.ToEnumByValue<TEnum>();
             }
 
             return default;
@@ -474,7 +478,43 @@ namespace Ideal.Core.Common.Extensions
     public static partial class EnumExtension
     {
         /// <summary>
-        /// 枚举转枚举描述(Descripion)。
+        /// 枚举项转枚举值
+        /// </summary>
+        /// <param name="source">枚举项</param>
+        /// <returns>枚举值</returns>
+        public static int ToEnumValue(this Enum source)
+        {
+            return Convert.ToInt32(source);
+        }
+
+        /// <summary>
+        /// 枚举项转枚举值
+        /// </summary>
+        /// <typeparam name="TValue">枚举值</typeparam>
+        /// <param name="source">枚举项</param>
+        /// <returns>枚举值</returns>
+        /// <exception cref="InvalidOperationException">TValue必须是以下类型：byte, sbyte, short, ushort, int, uint, long, ulong.</exception>
+        public static TValue ToEnumValue<TValue>(this Enum source) 
+            where TValue : struct
+        {
+            //断言值类型有效
+            AssertValueTypeValid<TValue>();
+
+            // 获取枚举的底层类型（byte, sbyte, short, ushort, int, uint, long, ulong）
+            var underlyingType = Enum.GetUnderlyingType(source.GetType());
+
+            // 如果底层类型是 TValue 类型，则直接转换
+            if (underlyingType == typeof(TValue))
+            {
+                return (TValue)(object)source;
+            }
+
+            // 否则，使用 Convert.ChangeType 来进行转换
+            return (TValue)Convert.ChangeType(source, typeof(TValue));
+        }
+
+        /// <summary>
+        /// 枚举项转枚举描述(Descripion)。
         /// 支持位域，如果是位域组合值，多个值按分隔符[,]组合。
         /// </summary>
         /// <param name="source">枚举项</param>
@@ -508,66 +548,32 @@ namespace Ideal.Core.Common.Extensions
         }
 
         /// <summary>
-        /// 枚举转枚举值
+        /// 获取枚举值+枚举名称
         /// </summary>
-        /// <param name="source">枚举项</param>
-        /// <returns>枚举值</returns>
-        public static int ToEnumValue(this Enum source)
+        ///<param name="type">枚举的类型</param>
+        /// <returns>键值对(枚举值-枚举名称)</returns>
+        /// <exception cref="InvalidOperationException">type必须是枚举类型</exception>
+        public static Dictionary<int, string> GetEnumValueNames(this Type type)
         {
-            return Convert.ToInt32(source);
+            return GetEnumValueNames<int>(type);
         }
 
         /// <summary>
-        /// 枚举转枚举值
+        /// 获取枚举值+枚举名称
         /// </summary>
         /// <typeparam name="TValue">枚举值</typeparam>
-        /// <param name="source">枚举项</param>
-        /// <returns>枚举值</returns>
-        /// <exception cref="InvalidOperationException">TValue必须是以下类型：byte, sbyte, short, ushort, int, uint, long, ulong.</exception>
-        public static TValue ToEnumValue<TValue>(this Enum source)
+        /// <param name="type">枚举的类型</param>
+        /// <returns>键值对(枚举值-枚举名称)</returns>
+        /// <exception cref="InvalidOperationException">type必须是枚举类型</exception>
+        public static Dictionary<TValue, string> GetEnumValueNames<TValue>(this Type type)
+            where TValue : struct
         {
             //断言值类型有效
             AssertValueTypeValid<TValue>();
-
-            // 获取枚举的底层类型（byte, sbyte, short, ushort, int, uint, long, ulong）
-            var underlyingType = Enum.GetUnderlyingType(source.GetType());
-
-            // 如果底层类型是 TValue 类型，则直接转换
-            if (underlyingType == typeof(TValue))
-            {
-                return (TValue)(object)source;
-            }
-
-            // 否则，使用 Convert.ChangeType 来进行转换
-            return (TValue)Convert.ChangeType(source, typeof(TValue));
-        }
-
-        /// <summary>
-        /// 获取枚举描述+枚举名称
-        /// </summary>
-        /// <param name="type">枚举类型</param>
-        /// <returns>键值对(枚举描述-枚举名称)</returns>
-        /// <exception cref="InvalidOperationException">type必须是枚举类型</exception>
-        public static Dictionary<string, string> ToEnumNameDescs(this Type type)
-        {
             //根据type获取枚举类型基础信息
             var info = GetEnumTypeInfo(type);
             //通过枚举项集合转为目标类型
-            return info.Items.ToDictionary(r => r.ToString(), r => r.ToEnumDesc());
-        }
-
-        /// <summary>
-        /// 获取枚举描述+枚举名称
-        /// </summary>
-        /// <param name="type">枚举类型</param>
-        /// <returns>键值对(枚举描述-枚举名称)</returns>
-        /// <exception cref="InvalidOperationException">type必须是枚举类型</exception>
-        public static Dictionary<string, string> ToEnumDescNames(this Type type)
-        {
-            //根据type获取枚举类型基础信息
-            var info = GetEnumTypeInfo(type);
-            //通过枚举项集合转为目标类型
-            return info.Items.ToDictionary(r => r.ToEnumDesc(), r => r.ToString());
+            return info.Items.ToDictionary(r => r.ToEnumValue<TValue>(), r => r.ToString());
         }
 
         /// <summary>
@@ -601,35 +607,6 @@ namespace Ideal.Core.Common.Extensions
         }
 
         /// <summary>
-        /// 获取枚举描述+枚举值
-        /// </summary>
-        /// <param name="type">枚举类型</param>
-        /// <returns>键值对(枚举描述-枚举值)</returns>
-        /// <exception cref="InvalidOperationException">type必须是枚举类型</exception>
-        public static Dictionary<string, int> ToEnumDescValues(this Type type)
-        {
-            return ToEnumDescValues<int>(type);
-        }
-
-        ///<summary>
-        /// 获取枚举描述+枚举值
-        /// </summary>
-        /// <typeparam name="TValue">枚举值</typeparam>
-        /// <param name="type">枚举类型</param>
-        /// <returns>键值对(枚举描述-枚举值)</returns>
-        /// <exception cref="InvalidOperationException">type必须是枚举类型</exception>
-        public static Dictionary<string, TValue> ToEnumDescValues<TValue>(this Type type)
-            where TValue : struct
-        {
-            //断言值类型有效
-            AssertValueTypeValid<TValue>();
-            //根据type获取枚举类型基础信息
-            var info = GetEnumTypeInfo(type);
-            //通过枚举项集合转为目标类型
-            return info.Items.ToDictionary(r => r.ToEnumDesc(), r => r.ToEnumValue<TValue>());
-        }
-
-        /// <summary>
         /// 获取枚举名称+枚举值
         /// </summary>
         /// <param name="type">枚举类型</param>
@@ -659,24 +636,38 @@ namespace Ideal.Core.Common.Extensions
         }
 
         /// <summary>
-        /// 获取枚举值+枚举名称
+        /// 获取枚举名称+枚举描述
         /// </summary>
-        ///<param name="type">枚举的类型</param>
-        /// <returns>键值对(枚举值-枚举名称)</returns>
+        /// <param name="type">枚举类型</param>
+        /// <returns>键值对(枚举名称-枚举描述)</returns>
         /// <exception cref="InvalidOperationException">type必须是枚举类型</exception>
-        public static Dictionary<int, string> GetEnumValueNames(this Type type)
+        public static Dictionary<string, string> ToEnumNameDescs(this Type type)
         {
-            return GetEnumValueNames<int>(type);
+            //根据type获取枚举类型基础信息
+            var info = GetEnumTypeInfo(type);
+            //通过枚举项集合转为目标类型
+            return info.Items.ToDictionary(r => r.ToString(), r => r.ToEnumDesc());
         }
 
         /// <summary>
-        /// 获取枚举值+枚举名称
+        /// 获取枚举描述+枚举值
+        /// </summary>
+        /// <param name="type">枚举类型</param>
+        /// <returns>键值对(枚举描述-枚举值)</returns>
+        /// <exception cref="InvalidOperationException">type必须是枚举类型</exception>
+        public static Dictionary<string, int> ToEnumDescValues(this Type type)
+        {
+            return ToEnumDescValues<int>(type);
+        }
+
+        ///<summary>
+        /// 获取枚举描述+枚举值
         /// </summary>
         /// <typeparam name="TValue">枚举值</typeparam>
-        /// <param name="type">枚举的类型</param>
-        /// <returns>键值对(枚举值-枚举名称)</returns>
+        /// <param name="type">枚举类型</param>
+        /// <returns>键值对(枚举描述-枚举值)</returns>
         /// <exception cref="InvalidOperationException">type必须是枚举类型</exception>
-        public static Dictionary<TValue, string> GetEnumValueNames<TValue>(this Type type)
+        public static Dictionary<string, TValue> ToEnumDescValues<TValue>(this Type type)
             where TValue : struct
         {
             //断言值类型有效
@@ -684,7 +675,21 @@ namespace Ideal.Core.Common.Extensions
             //根据type获取枚举类型基础信息
             var info = GetEnumTypeInfo(type);
             //通过枚举项集合转为目标类型
-            return info.Items.ToDictionary(r => r.ToEnumValue<TValue>(), r => r.ToString());
+            return info.Items.ToDictionary(r => r.ToEnumDesc(), r => r.ToEnumValue<TValue>());
+        }
+
+        /// <summary>
+        /// 获取枚举描述+枚举名称
+        /// </summary>
+        /// <param name="type">枚举类型</param>
+        /// <returns>键值对(枚举描述-枚举名称)</returns>
+        /// <exception cref="InvalidOperationException">type必须是枚举类型</exception>
+        public static Dictionary<string, string> ToEnumDescNames(this Type type)
+        {
+            //根据type获取枚举类型基础信息
+            var info = GetEnumTypeInfo(type);
+            //通过枚举项集合转为目标类型
+            return info.Items.ToDictionary(r => r.ToEnumDesc(), r => r.ToString());
         }
     }
 
@@ -706,7 +711,7 @@ namespace Ideal.Core.Common.Extensions
             /// <summary>
             /// 枚举掩码
             /// </summary>
-            public long Mask { get; set; }
+            public ulong Mask { get; set; }
 
             /// <summary>
             /// 枚举项集合
@@ -744,7 +749,7 @@ namespace Ideal.Core.Common.Extensions
                 //获取枚举所有值
                 var values = Enum.GetValues(key);
                 //初始化存储掩码变量
-                var mask = 0L;
+                ulong mask = 0L;
                 //遍历所有枚举值，通过位或运算合并所有枚举值
                 foreach (Enum value in values)
                 {
@@ -753,7 +758,7 @@ namespace Ideal.Core.Common.Extensions
                     if (info.IsFlags)
                     {
                         //将枚举值转为long类型
-                        var valueLong = Convert.ToInt64(value);
+                        var valueLong = Convert.ToUInt64(value);
                         // 过滤掉负数或无效的值，规范的位标志枚举应该都为非负数
                         if (valueLong >= 0)
                         {
@@ -794,9 +799,10 @@ namespace Ideal.Core.Common.Extensions
         /// <summary>
         /// 计算是否为有效的位标志组合项
         /// </summary>
-        /// <typeparam name="TEnum"></typeparam>
-        /// <param name="value"></param>
-        /// <returns></returns>
+        /// <typeparam name="TValue">枚举值类型</typeparam>
+        /// <typeparam name="TEnum">枚举类型</typeparam>
+        /// <param name="value">枚举值</param>
+        /// <returns>是否为有效的枚举项</returns>
         private static bool IsValidFlagsMask<TValue, TEnum>(TValue value)
             where TValue : struct
             where TEnum : struct, Enum
@@ -809,11 +815,12 @@ namespace Ideal.Core.Common.Extensions
                 return false;
             }
 
-            var source = Convert.ToInt64(value);
+            var source = Convert.ToUInt64(value);
             //使用待验证值value和枚举掩码取反做与运算
             //结果等于0表示value为有效枚举值
             return (source & ~info.Mask) == 0;
         }
+
 
         /// <summary>
         /// 获取描述信息，如果没有描述信息则取字段名称
@@ -996,7 +1003,7 @@ namespace Ideal.Core.Common.Extensions
     #region 枚举值转枚举
 
     /// <summary>
-    /// 枚举相关扩展方法（int类型）
+    /// 枚举相关扩展方法（sbyte类型）
     /// </summary>
     public static partial class EnumExtension
     {
@@ -1006,11 +1013,11 @@ namespace Ideal.Core.Common.Extensions
         /// <typeparam name="TEnum">枚举类型</typeparam>
         /// <param name="value">枚举值</param>
         /// <returns>枚举</returns>
-        public static TEnum? ToEnumByValue<TEnum>(this int value)
+        public static TEnum? ToEnumByValue<TEnum>(this sbyte value)
             where TEnum : struct, Enum
         {
             //调用根据枚举值转换成枚举方法
-            return ToEnumByValue<int, TEnum>(value);
+            return ToEnumByValue<sbyte, TEnum>(value);
         }
 
         /// <summary>
@@ -1020,11 +1027,11 @@ namespace Ideal.Core.Common.Extensions
         /// <param name="value">枚举值</param>
         /// <param name="defaultValue">默认枚举</param>
         /// <returns>枚举</returns>
-        public static TEnum? ToEnumOrDefaultByValue<TEnum>(this int value, TEnum defaultValue)
+        public static TEnum? ToEnumOrDefaultByValue<TEnum>(this sbyte value, TEnum defaultValue)
             where TEnum : struct, Enum
         {
             //调用根据枚举值转换成枚举方法
-            return ToEnumOrDefaultByValue<int, TEnum>(value, defaultValue);
+            return ToEnumOrDefaultByValue<sbyte, TEnum>(value, defaultValue);
         }
 
         /// <summary>
@@ -1033,11 +1040,11 @@ namespace Ideal.Core.Common.Extensions
         /// <typeparam name="TEnum">枚举类型</typeparam>
         /// <param name="value">枚举值</param>
         /// <returns>枚举名称</returns>
-        public static string? ToEnumNameByValue<TEnum>(this int value)
+        public static string? ToEnumNameByValue<TEnum>(this sbyte value)
             where TEnum : struct, Enum
         {
             //调用根据枚举值转换成枚举名称方法
-            return ToEnumNameByValue<int, TEnum>(value);
+            return ToEnumNameByValue<sbyte, TEnum>(value);
         }
 
         /// <summary>
@@ -1047,11 +1054,11 @@ namespace Ideal.Core.Common.Extensions
         /// <param name="value">枚举值</param>
         /// <param name="defaultValue">默认枚举名称</param>
         /// <returns>枚举名称</returns>
-        public static string? ToEnumNameOrDefaultByValue<TEnum>(this int value, string defaultValue)
+        public static string? ToEnumNameOrDefaultByValue<TEnum>(this sbyte value, string defaultValue)
             where TEnum : struct, Enum
         {
             //调用根据枚举值转换成枚举名称方法
-            return ToEnumNameOrDefaultByValue<int, TEnum>(value, defaultValue);
+            return ToEnumNameOrDefaultByValue<sbyte, TEnum>(value, defaultValue);
         }
 
         /// <summary>
@@ -1060,11 +1067,11 @@ namespace Ideal.Core.Common.Extensions
         /// <typeparam name="TEnum">枚举类型</typeparam>
         /// <param name="value">枚举值</param>
         /// <returns>枚举描述</returns>
-        public static string? ToEnumDescByValue<TEnum>(this int value)
+        public static string? ToEnumDescByValue<TEnum>(this sbyte value)
             where TEnum : struct, Enum
         {
             //调用根据枚举值转换成枚举描述方法
-            return ToEnumDescByValue<int, TEnum>(value);
+            return ToEnumDescByValue<sbyte, TEnum>(value);
         }
 
         /// <summary>
@@ -1074,98 +1081,11 @@ namespace Ideal.Core.Common.Extensions
         /// <param name="value">枚举值</param>
         /// <param name="defaultValue">默认枚举描述</param>
         /// <returns>枚举描述</returns>
-        public static string? ToEnumDescOrDefaultByValue<TEnum>(this int value, string defaultValue)
+        public static string? ToEnumDescOrDefaultByValue<TEnum>(this sbyte value, string defaultValue)
             where TEnum : struct, Enum
         {
             //调用根据枚举值转换成枚举描述方法
-            return ToEnumDescOrDefaultByValue<int, TEnum>(value, defaultValue);
-        }
-    }
-
-    /// <summary>
-    /// 枚举相关扩展方法（short类型）
-    /// </summary>
-    public static partial class EnumExtension
-    {
-        /// <summary>
-        /// 根据枚举值转换成枚举，转换失败则返回空
-        /// </summary>
-        /// <typeparam name="TEnum">枚举类型</typeparam>
-        /// <param name="value">枚举值</param>
-        /// <returns>枚举</returns>
-        public static TEnum? ToEnumByValue<TEnum>(this short value)
-            where TEnum : struct, Enum
-        {
-            //调用根据枚举值转换成枚举方法
-            return ToEnumByValue<short, TEnum>(value);
-        }
-
-        /// <summary>
-        /// 根据枚举值转换成枚举，转换失败则返回默认枚举
-        /// </summary>
-        /// <typeparam name="TEnum">枚举类型</typeparam>
-        /// <param name="value">枚举值</param>
-        /// <param name="defaultValue">默认枚举</param>
-        /// <returns>枚举</returns>
-        public static TEnum? ToEnumOrDefaultByValue<TEnum>(this short value, TEnum defaultValue)
-            where TEnum : struct, Enum
-        {
-            //调用根据枚举值转换成枚举方法
-            return ToEnumOrDefaultByValue<short, TEnum>(value, defaultValue);
-        }
-
-        /// <summary>
-        /// 根据枚举值转换成枚举名称，转换失败则返回空
-        /// </summary>
-        /// <typeparam name="TEnum">枚举类型</typeparam>
-        /// <param name="value">枚举值</param>
-        /// <returns>枚举名称</returns>
-        public static string? ToEnumNameByValue<TEnum>(this short value)
-            where TEnum : struct, Enum
-        {
-            //调用根据枚举值转换成枚举名称方法
-            return ToEnumNameByValue<short, TEnum>(value);
-        }
-
-        /// <summary>
-        /// 根据枚举值转换成枚举名称，转换失败则返回默认枚举名称
-        /// </summary>
-        /// <typeparam name="TEnum">枚举类型</typeparam>
-        /// <param name="value">枚举值</param>
-        /// <param name="defaultValue">默认枚举名称</param>
-        /// <returns>枚举名称</returns>
-        public static string? ToEnumNameOrDefaultByValue<TEnum>(this short value, string defaultValue)
-            where TEnum : struct, Enum
-        {
-            //调用根据枚举值转换成枚举名称方法
-            return ToEnumNameOrDefaultByValue<short, TEnum>(value, defaultValue);
-        }
-
-        /// <summary>
-        /// 根据枚举值转换成枚举描述，转换失败则返回空
-        /// </summary>
-        /// <typeparam name="TEnum">枚举类型</typeparam>
-        /// <param name="value">枚举值</param>
-        /// <returns>枚举描述</returns>
-        public static string? ToEnumDescByValue<TEnum>(this short value)
-            where TEnum : struct, Enum
-        {
-            //调用根据枚举值转换成枚举描述方法
-            return ToEnumDescByValue<short, TEnum>(value);
-        }
-
-        /// <summary>
-        /// 根据枚举值转换成枚举描述，转换失败则返回默认枚举描述
-        /// </summary>
-        /// <typeparam name="TEnum">枚举类型</typeparam>
-        /// <param name="value">枚举值</param>
-        /// <param name="defaultValue">默认枚举描述</param>
-        /// <returns>枚举描述</returns>
-        public static string? ToEnumDescOrDefaultByValue<TEnum>(this short value, string defaultValue)
-            where TEnum : struct, Enum
-        {
-            //调用根据枚举值转换成枚举描述方法
-            return ToEnumDescOrDefaultByValue<short, TEnum>(value, defaultValue);
+            return ToEnumDescOrDefaultByValue<sbyte, TEnum>(value, defaultValue);
         }
     }
 
@@ -1257,7 +1177,7 @@ namespace Ideal.Core.Common.Extensions
     }
 
     /// <summary>
-    /// 枚举相关扩展方法（long类型）
+    /// 枚举相关扩展方法（short类型）
     /// </summary>
     public static partial class EnumExtension
     {
@@ -1267,11 +1187,11 @@ namespace Ideal.Core.Common.Extensions
         /// <typeparam name="TEnum">枚举类型</typeparam>
         /// <param name="value">枚举值</param>
         /// <returns>枚举</returns>
-        public static TEnum? ToEnumByValue<TEnum>(this long value)
+        public static TEnum? ToEnumByValue<TEnum>(this short value)
             where TEnum : struct, Enum
         {
             //调用根据枚举值转换成枚举方法
-            return ToEnumByValue<long, TEnum>(value);
+            return ToEnumByValue<short, TEnum>(value);
         }
 
         /// <summary>
@@ -1281,11 +1201,11 @@ namespace Ideal.Core.Common.Extensions
         /// <param name="value">枚举值</param>
         /// <param name="defaultValue">默认枚举</param>
         /// <returns>枚举</returns>
-        public static TEnum? ToEnumOrDefaultByValue<TEnum>(this long value, TEnum defaultValue)
+        public static TEnum? ToEnumOrDefaultByValue<TEnum>(this short value, TEnum defaultValue)
             where TEnum : struct, Enum
         {
             //调用根据枚举值转换成枚举方法
-            return ToEnumOrDefaultByValue<long, TEnum>(value, defaultValue);
+            return ToEnumOrDefaultByValue<short, TEnum>(value, defaultValue);
         }
 
         /// <summary>
@@ -1294,11 +1214,11 @@ namespace Ideal.Core.Common.Extensions
         /// <typeparam name="TEnum">枚举类型</typeparam>
         /// <param name="value">枚举值</param>
         /// <returns>枚举名称</returns>
-        public static string? ToEnumNameByValue<TEnum>(this long value)
+        public static string? ToEnumNameByValue<TEnum>(this short value)
             where TEnum : struct, Enum
         {
             //调用根据枚举值转换成枚举名称方法
-            return ToEnumNameByValue<long, TEnum>(value);
+            return ToEnumNameByValue<short, TEnum>(value);
         }
 
         /// <summary>
@@ -1308,11 +1228,11 @@ namespace Ideal.Core.Common.Extensions
         /// <param name="value">枚举值</param>
         /// <param name="defaultValue">默认枚举名称</param>
         /// <returns>枚举名称</returns>
-        public static string? ToEnumNameOrDefaultByValue<TEnum>(this long value, string defaultValue)
+        public static string? ToEnumNameOrDefaultByValue<TEnum>(this short value, string defaultValue)
             where TEnum : struct, Enum
         {
             //调用根据枚举值转换成枚举名称方法
-            return ToEnumNameOrDefaultByValue<long, TEnum>(value, defaultValue);
+            return ToEnumNameOrDefaultByValue<short, TEnum>(value, defaultValue);
         }
 
         /// <summary>
@@ -1321,11 +1241,11 @@ namespace Ideal.Core.Common.Extensions
         /// <typeparam name="TEnum">枚举类型</typeparam>
         /// <param name="value">枚举值</param>
         /// <returns>枚举描述</returns>
-        public static string? ToEnumDescByValue<TEnum>(this long value)
+        public static string? ToEnumDescByValue<TEnum>(this short value)
             where TEnum : struct, Enum
         {
             //调用根据枚举值转换成枚举描述方法
-            return ToEnumDescByValue<long, TEnum>(value);
+            return ToEnumDescByValue<short, TEnum>(value);
         }
 
         /// <summary>
@@ -1335,98 +1255,11 @@ namespace Ideal.Core.Common.Extensions
         /// <param name="value">枚举值</param>
         /// <param name="defaultValue">默认枚举描述</param>
         /// <returns>枚举描述</returns>
-        public static string? ToEnumDescOrDefaultByValue<TEnum>(this long value, string defaultValue)
+        public static string? ToEnumDescOrDefaultByValue<TEnum>(this short value, string defaultValue)
             where TEnum : struct, Enum
         {
             //调用根据枚举值转换成枚举描述方法
-            return ToEnumDescOrDefaultByValue<long, TEnum>(value, defaultValue);
-        }
-    }
-
-    /// <summary>
-    /// 枚举相关扩展方法（sbyte类型）
-    /// </summary>
-    public static partial class EnumExtension
-    {
-        /// <summary>
-        /// 根据枚举值转换成枚举，转换失败则返回空
-        /// </summary>
-        /// <typeparam name="TEnum">枚举类型</typeparam>
-        /// <param name="value">枚举值</param>
-        /// <returns>枚举</returns>
-        public static TEnum? ToEnumByValue<TEnum>(this sbyte value)
-            where TEnum : struct, Enum
-        {
-            //调用根据枚举值转换成枚举方法
-            return ToEnumByValue<sbyte, TEnum>(value);
-        }
-
-        /// <summary>
-        /// 根据枚举值转换成枚举，转换失败则返回默认枚举
-        /// </summary>
-        /// <typeparam name="TEnum">枚举类型</typeparam>
-        /// <param name="value">枚举值</param>
-        /// <param name="defaultValue">默认枚举</param>
-        /// <returns>枚举</returns>
-        public static TEnum? ToEnumOrDefaultByValue<TEnum>(this sbyte value, TEnum defaultValue)
-            where TEnum : struct, Enum
-        {
-            //调用根据枚举值转换成枚举方法
-            return ToEnumOrDefaultByValue<sbyte, TEnum>(value, defaultValue);
-        }
-
-        /// <summary>
-        /// 根据枚举值转换成枚举名称，转换失败则返回空
-        /// </summary>
-        /// <typeparam name="TEnum">枚举类型</typeparam>
-        /// <param name="value">枚举值</param>
-        /// <returns>枚举名称</returns>
-        public static string? ToEnumNameByValue<TEnum>(this sbyte value)
-            where TEnum : struct, Enum
-        {
-            //调用根据枚举值转换成枚举名称方法
-            return ToEnumNameByValue<sbyte, TEnum>(value);
-        }
-
-        /// <summary>
-        /// 根据枚举值转换成枚举名称，转换失败则返回默认枚举名称
-        /// </summary>
-        /// <typeparam name="TEnum">枚举类型</typeparam>
-        /// <param name="value">枚举值</param>
-        /// <param name="defaultValue">默认枚举名称</param>
-        /// <returns>枚举名称</returns>
-        public static string? ToEnumNameOrDefaultByValue<TEnum>(this sbyte value, string defaultValue)
-            where TEnum : struct, Enum
-        {
-            //调用根据枚举值转换成枚举名称方法
-            return ToEnumNameOrDefaultByValue<sbyte, TEnum>(value, defaultValue);
-        }
-
-        /// <summary>
-        /// 根据枚举值转换成枚举描述，转换失败则返回空
-        /// </summary>
-        /// <typeparam name="TEnum">枚举类型</typeparam>
-        /// <param name="value">枚举值</param>
-        /// <returns>枚举描述</returns>
-        public static string? ToEnumDescByValue<TEnum>(this sbyte value)
-            where TEnum : struct, Enum
-        {
-            //调用根据枚举值转换成枚举描述方法
-            return ToEnumDescByValue<sbyte, TEnum>(value);
-        }
-
-        /// <summary>
-        /// 根据枚举值转换成枚举描述，转换失败则返回默认枚举描述
-        /// </summary>
-        /// <typeparam name="TEnum">枚举类型</typeparam>
-        /// <param name="value">枚举值</param>
-        /// <param name="defaultValue">默认枚举描述</param>
-        /// <returns>枚举描述</returns>
-        public static string? ToEnumDescOrDefaultByValue<TEnum>(this sbyte value, string defaultValue)
-            where TEnum : struct, Enum
-        {
-            //调用根据枚举值转换成枚举描述方法
-            return ToEnumDescOrDefaultByValue<sbyte, TEnum>(value, defaultValue);
+            return ToEnumDescOrDefaultByValue<short, TEnum>(value, defaultValue);
         }
     }
 
@@ -1518,7 +1351,7 @@ namespace Ideal.Core.Common.Extensions
     }
 
     /// <summary>
-    /// 枚举相关扩展方法（ulong类型）
+    /// 枚举相关扩展方法（int类型）
     /// </summary>
     public static partial class EnumExtension
     {
@@ -1528,11 +1361,11 @@ namespace Ideal.Core.Common.Extensions
         /// <typeparam name="TEnum">枚举类型</typeparam>
         /// <param name="value">枚举值</param>
         /// <returns>枚举</returns>
-        public static TEnum? ToEnumByValue<TEnum>(this ulong value)
+        public static TEnum? ToEnumByValue<TEnum>(this int value)
             where TEnum : struct, Enum
         {
             //调用根据枚举值转换成枚举方法
-            return ToEnumByValue<ulong, TEnum>(value);
+            return ToEnumByValue<int, TEnum>(value);
         }
 
         /// <summary>
@@ -1542,11 +1375,11 @@ namespace Ideal.Core.Common.Extensions
         /// <param name="value">枚举值</param>
         /// <param name="defaultValue">默认枚举</param>
         /// <returns>枚举</returns>
-        public static TEnum? ToEnumOrDefaultByValue<TEnum>(this ulong value, TEnum defaultValue)
+        public static TEnum? ToEnumOrDefaultByValue<TEnum>(this int value, TEnum defaultValue)
             where TEnum : struct, Enum
         {
             //调用根据枚举值转换成枚举方法
-            return ToEnumOrDefaultByValue<ulong, TEnum>(value, defaultValue);
+            return ToEnumOrDefaultByValue<int, TEnum>(value, defaultValue);
         }
 
         /// <summary>
@@ -1555,11 +1388,11 @@ namespace Ideal.Core.Common.Extensions
         /// <typeparam name="TEnum">枚举类型</typeparam>
         /// <param name="value">枚举值</param>
         /// <returns>枚举名称</returns>
-        public static string? ToEnumNameByValue<TEnum>(this ulong value)
+        public static string? ToEnumNameByValue<TEnum>(this int value)
             where TEnum : struct, Enum
         {
             //调用根据枚举值转换成枚举名称方法
-            return ToEnumNameByValue<ulong, TEnum>(value);
+            return ToEnumNameByValue<int, TEnum>(value);
         }
 
         /// <summary>
@@ -1569,11 +1402,11 @@ namespace Ideal.Core.Common.Extensions
         /// <param name="value">枚举值</param>
         /// <param name="defaultValue">默认枚举名称</param>
         /// <returns>枚举名称</returns>
-        public static string? ToEnumNameOrDefaultByValue<TEnum>(this ulong value, string defaultValue)
+        public static string? ToEnumNameOrDefaultByValue<TEnum>(this int value, string defaultValue)
             where TEnum : struct, Enum
         {
             //调用根据枚举值转换成枚举名称方法
-            return ToEnumNameOrDefaultByValue<ulong, TEnum>(value, defaultValue);
+            return ToEnumNameOrDefaultByValue<int, TEnum>(value, defaultValue);
         }
 
         /// <summary>
@@ -1582,11 +1415,11 @@ namespace Ideal.Core.Common.Extensions
         /// <typeparam name="TEnum">枚举类型</typeparam>
         /// <param name="value">枚举值</param>
         /// <returns>枚举描述</returns>
-        public static string? ToEnumDescByValue<TEnum>(this ulong value)
+        public static string? ToEnumDescByValue<TEnum>(this int value)
             where TEnum : struct, Enum
         {
             //调用根据枚举值转换成枚举描述方法
-            return ToEnumDescByValue<ulong, TEnum>(value);
+            return ToEnumDescByValue<int, TEnum>(value);
         }
 
         /// <summary>
@@ -1596,11 +1429,11 @@ namespace Ideal.Core.Common.Extensions
         /// <param name="value">枚举值</param>
         /// <param name="defaultValue">默认枚举描述</param>
         /// <returns>枚举描述</returns>
-        public static string? ToEnumDescOrDefaultByValue<TEnum>(this ulong value, string defaultValue)
+        public static string? ToEnumDescOrDefaultByValue<TEnum>(this int value, string defaultValue)
             where TEnum : struct, Enum
         {
             //调用根据枚举值转换成枚举描述方法
-            return ToEnumDescOrDefaultByValue<ulong, TEnum>(value, defaultValue);
+            return ToEnumDescOrDefaultByValue<int, TEnum>(value, defaultValue);
         }
     }
 
@@ -1688,6 +1521,180 @@ namespace Ideal.Core.Common.Extensions
         {
             //调用根据枚举值转换成枚举描述方法
             return ToEnumDescOrDefaultByValue<uint, TEnum>(value, defaultValue);
+        }
+    }
+
+    /// <summary>
+    /// 枚举相关扩展方法（long类型）
+    /// </summary>
+    public static partial class EnumExtension
+    {
+        /// <summary>
+        /// 根据枚举值转换成枚举，转换失败则返回空
+        /// </summary>
+        /// <typeparam name="TEnum">枚举类型</typeparam>
+        /// <param name="value">枚举值</param>
+        /// <returns>枚举</returns>
+        public static TEnum? ToEnumByValue<TEnum>(this long value)
+            where TEnum : struct, Enum
+        {
+            //调用根据枚举值转换成枚举方法
+            return ToEnumByValue<long, TEnum>(value);
+        }
+
+        /// <summary>
+        /// 根据枚举值转换成枚举，转换失败则返回默认枚举
+        /// </summary>
+        /// <typeparam name="TEnum">枚举类型</typeparam>
+        /// <param name="value">枚举值</param>
+        /// <param name="defaultValue">默认枚举</param>
+        /// <returns>枚举</returns>
+        public static TEnum? ToEnumOrDefaultByValue<TEnum>(this long value, TEnum defaultValue)
+            where TEnum : struct, Enum
+        {
+            //调用根据枚举值转换成枚举方法
+            return ToEnumOrDefaultByValue<long, TEnum>(value, defaultValue);
+        }
+
+        /// <summary>
+        /// 根据枚举值转换成枚举名称，转换失败则返回空
+        /// </summary>
+        /// <typeparam name="TEnum">枚举类型</typeparam>
+        /// <param name="value">枚举值</param>
+        /// <returns>枚举名称</returns>
+        public static string? ToEnumNameByValue<TEnum>(this long value)
+            where TEnum : struct, Enum
+        {
+            //调用根据枚举值转换成枚举名称方法
+            return ToEnumNameByValue<long, TEnum>(value);
+        }
+
+        /// <summary>
+        /// 根据枚举值转换成枚举名称，转换失败则返回默认枚举名称
+        /// </summary>
+        /// <typeparam name="TEnum">枚举类型</typeparam>
+        /// <param name="value">枚举值</param>
+        /// <param name="defaultValue">默认枚举名称</param>
+        /// <returns>枚举名称</returns>
+        public static string? ToEnumNameOrDefaultByValue<TEnum>(this long value, string defaultValue)
+            where TEnum : struct, Enum
+        {
+            //调用根据枚举值转换成枚举名称方法
+            return ToEnumNameOrDefaultByValue<long, TEnum>(value, defaultValue);
+        }
+
+        /// <summary>
+        /// 根据枚举值转换成枚举描述，转换失败则返回空
+        /// </summary>
+        /// <typeparam name="TEnum">枚举类型</typeparam>
+        /// <param name="value">枚举值</param>
+        /// <returns>枚举描述</returns>
+        public static string? ToEnumDescByValue<TEnum>(this long value)
+            where TEnum : struct, Enum
+        {
+            //调用根据枚举值转换成枚举描述方法
+            return ToEnumDescByValue<long, TEnum>(value);
+        }
+
+        /// <summary>
+        /// 根据枚举值转换成枚举描述，转换失败则返回默认枚举描述
+        /// </summary>
+        /// <typeparam name="TEnum">枚举类型</typeparam>
+        /// <param name="value">枚举值</param>
+        /// <param name="defaultValue">默认枚举描述</param>
+        /// <returns>枚举描述</returns>
+        public static string? ToEnumDescOrDefaultByValue<TEnum>(this long value, string defaultValue)
+            where TEnum : struct, Enum
+        {
+            //调用根据枚举值转换成枚举描述方法
+            return ToEnumDescOrDefaultByValue<long, TEnum>(value, defaultValue);
+        }
+    }
+
+    /// <summary>
+    /// 枚举相关扩展方法（ulong类型）
+    /// </summary>
+    public static partial class EnumExtension
+    {
+        /// <summary>
+        /// 根据枚举值转换成枚举，转换失败则返回空
+        /// </summary>
+        /// <typeparam name="TEnum">枚举类型</typeparam>
+        /// <param name="value">枚举值</param>
+        /// <returns>枚举</returns>
+        public static TEnum? ToEnumByValue<TEnum>(this ulong value)
+            where TEnum : struct, Enum
+        {
+            //调用根据枚举值转换成枚举方法
+            return ToEnumByValue<ulong, TEnum>(value);
+        }
+
+        /// <summary>
+        /// 根据枚举值转换成枚举，转换失败则返回默认枚举
+        /// </summary>
+        /// <typeparam name="TEnum">枚举类型</typeparam>
+        /// <param name="value">枚举值</param>
+        /// <param name="defaultValue">默认枚举</param>
+        /// <returns>枚举</returns>
+        public static TEnum? ToEnumOrDefaultByValue<TEnum>(this ulong value, TEnum defaultValue)
+            where TEnum : struct, Enum
+        {
+            //调用根据枚举值转换成枚举方法
+            return ToEnumOrDefaultByValue<ulong, TEnum>(value, defaultValue);
+        }
+
+        /// <summary>
+        /// 根据枚举值转换成枚举名称，转换失败则返回空
+        /// </summary>
+        /// <typeparam name="TEnum">枚举类型</typeparam>
+        /// <param name="value">枚举值</param>
+        /// <returns>枚举名称</returns>
+        public static string? ToEnumNameByValue<TEnum>(this ulong value)
+            where TEnum : struct, Enum
+        {
+            //调用根据枚举值转换成枚举名称方法
+            return ToEnumNameByValue<ulong, TEnum>(value);
+        }
+
+        /// <summary>
+        /// 根据枚举值转换成枚举名称，转换失败则返回默认枚举名称
+        /// </summary>
+        /// <typeparam name="TEnum">枚举类型</typeparam>
+        /// <param name="value">枚举值</param>
+        /// <param name="defaultValue">默认枚举名称</param>
+        /// <returns>枚举名称</returns>
+        public static string? ToEnumNameOrDefaultByValue<TEnum>(this ulong value, string defaultValue)
+            where TEnum : struct, Enum
+        {
+            //调用根据枚举值转换成枚举名称方法
+            return ToEnumNameOrDefaultByValue<ulong, TEnum>(value, defaultValue);
+        }
+
+        /// <summary>
+        /// 根据枚举值转换成枚举描述，转换失败则返回空
+        /// </summary>
+        /// <typeparam name="TEnum">枚举类型</typeparam>
+        /// <param name="value">枚举值</param>
+        /// <returns>枚举描述</returns>
+        public static string? ToEnumDescByValue<TEnum>(this ulong value)
+            where TEnum : struct, Enum
+        {
+            //调用根据枚举值转换成枚举描述方法
+            return ToEnumDescByValue<ulong, TEnum>(value);
+        }
+
+        /// <summary>
+        /// 根据枚举值转换成枚举描述，转换失败则返回默认枚举描述
+        /// </summary>
+        /// <typeparam name="TEnum">枚举类型</typeparam>
+        /// <param name="value">枚举值</param>
+        /// <param name="defaultValue">默认枚举描述</param>
+        /// <returns>枚举描述</returns>
+        public static string? ToEnumDescOrDefaultByValue<TEnum>(this ulong value, string defaultValue)
+            where TEnum : struct, Enum
+        {
+            //调用根据枚举值转换成枚举描述方法
+            return ToEnumDescOrDefaultByValue<ulong, TEnum>(value, defaultValue);
         }
     }
     #endregion
