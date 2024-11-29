@@ -1,9 +1,6 @@
-﻿using System;
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using System.ComponentModel;
 using System.Reflection;
-using System.Threading.Tasks;
-using System.Xml.Linq;
 
 namespace Ideal.Core.Common.Extensions
 {
@@ -494,7 +491,7 @@ namespace Ideal.Core.Common.Extensions
         /// <param name="source">枚举项</param>
         /// <returns>枚举值</returns>
         /// <exception cref="InvalidOperationException">TValue必须是以下类型：byte, sbyte, short, ushort, int, uint, long, ulong.</exception>
-        public static TValue ToEnumValue<TValue>(this Enum source) 
+        public static TValue ToEnumValue<TValue>(this Enum source)
             where TValue : struct
         {
             //断言值类型有效

@@ -1,6 +1,4 @@
 using Ideal.Core.Common.Extensions;
-using System.ComponentModel;
-using System.Globalization;
 using Xunit;
 
 namespace Ideal.Core.Common.Test
@@ -99,7 +97,7 @@ namespace Ideal.Core.Common.Test
             var now = DateTime.Now;
             var date1 = new DateOnly(2024, 11, 11);
             var date = date1.ToDateTime();
-            Assert.Equal($"{date1.ToString("yyyy-MM-dd")} {now.ToString("HH:mm:ss")}", date.ToString("yyyy-MM-dd HH:mm:ss"));
+            Assert.Equal($"{date1:yyyy-MM-dd} {now:HH:mm:ss}", date.ToString("yyyy-MM-dd HH:mm:ss"));
         }
 
         [Fact]

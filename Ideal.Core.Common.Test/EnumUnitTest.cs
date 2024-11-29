@@ -1,5 +1,4 @@
 using Ideal.Core.Common.Extensions;
-using System;
 using System.ComponentModel;
 using Xunit;
 

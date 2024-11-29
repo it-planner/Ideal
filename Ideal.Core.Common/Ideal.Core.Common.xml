@@ -1179,5 +1179,122 @@
             <param name="defaultValue">默认枚举描述</param>
             <returns>枚举描述</returns>
         </member>
+        <member name="T:Ideal.Core.Common.Helpers.TableHelper">
+            <summary>
+            表格帮助类 - 创建表格
+            </summary>
+            <summary>
+            表格帮助类 - 转换
+            </summary>
+        </member>
+        <member name="M:Ideal.Core.Common.Helpers.TableHelper.Create(System.String[],System.String)">
+            <summary>
+            根据列名数组创建表格
+            </summary>
+            <param name="columnNames">列名数组</param>
+            <param name="tableName">表名</param>
+            <returns>DataTable</returns>
+            <exception cref="T:System.Data.DuplicateNameException">列名重复异常</exception>
+        </member>
+        <member name="M:Ideal.Core.Common.Helpers.TableHelper.Create(System.Collections.Generic.Dictionary{System.String,System.Type},System.String)">
+            <summary>
+            根据列名-类型键值对创建表格
+            </summary>
+            <param name="columns">列名-类型键值对</param>
+            <param name="tableName">表名</param>
+            <returns>DataTable</returns>
+        </member>
+        <member name="M:Ideal.Core.Common.Helpers.TableHelper.Create``1(System.String)">
+            <summary>
+            根据类创建表格
+            如果设置DescriptionAttribute，则将特性值作为表格的列名称
+            否则将属性名作为表格的列名称
+            </summary>
+            <typeparam name="T">类</typeparam>
+            <param name="tableName">表名</param>
+            <returns>DataTable</returns>
+            <exception cref="T:System.InvalidOperationException">T必须是结构体或类，并且不能是集合类型</exception>
+        </member>
+        <member name="M:Ideal.Core.Common.Helpers.TableHelper.ToModels``1(System.Data.DataTable)">
+            <summary>
+            把表格转换为对象集合
+            如果设置DescriptionAttribute，则将特性值作为表格的列名称
+            否则将属性名作为表格的列名称
+            </summary>
+            <typeparam name="T">类</typeparam>
+            <param name="dataTable">表格</param>
+            <returns>对象集合</returns>
+            <exception cref="T:System.FormatException">表格中数据类型无法转为对象属性类型</exception>
+            <exception cref="T:System.NotSupportedException">表格列名无法映射至对象属性，无法完成转换</exception>
+        </member>
+        <member name="M:Ideal.Core.Common.Helpers.TableHelper.ToDataTable``1(System.Collections.Generic.IEnumerable{``0},System.String)">
+            <summary>
+            把对象集合转为表格
+            如果设置DescriptionAttribute，则将特性值作为表格的列名称
+            否则将属性名作为表格的列名称
+            </summary>
+            <typeparam name="T">类</typeparam>
+            <param name="tableName">表名</param>
+            <param name="models">对象集合</param>
+            <returns>DataTable</returns>
+        </member>
+        <member name="M:Ideal.Core.Common.Helpers.TableHelper.ToDataTableWithColumnArray``1(``0[],System.String,System.String)">
+            <summary>
+            把一维数组作为一列转换为表格
+            </summary>
+            <typeparam name="TColumn">列类型</typeparam>
+            <param name="array">一维数组</param>
+            <param name="tableName">表名</param>
+            <param name="columnName">列名</param>
+            <returns>DataTable</returns>
+        </member>
+        <member name="M:Ideal.Core.Common.Helpers.TableHelper.ToDataTableWithRowArray``1(``0[],System.String)">
+            <summary>
+            把一维数组作为一行转换为表格
+            </summary>
+            <typeparam name="TRow">行类型</typeparam>
+            <param name="array">一维数组</param>
+            <param name="tableName">表名</param>
+            <returns>返回DataTable</returns>
+        </member>
+        <member name="M:Ideal.Core.Common.Helpers.TableHelper.Transpose(System.Data.DataTable,System.Boolean)">
+            <summary>
+            行列转置
+            </summary>
+            <param name="dataTable">原表格</param>
+            <param name="isColumnNameAsData">列名是否作为数据</param>
+            <returns>DataTable</returns>
+        </member>
+        <member name="M:Ideal.Core.Common.Helpers.TableHelper.AssertTypeValid``1">
+            <summary>
+            断言类型有效性
+            </summary>
+            <typeparam name="T">类型</typeparam>
+            <exception cref="T:System.InvalidOperationException">T必须是结构体或类，并且不能是集合类型</exception>
+        </member>
+        <member name="M:Ideal.Core.Common.Helpers.TableHelper.GetColumnName(System.Reflection.PropertyInfo)">
+            <summary>
+            根据属性获取列名称
+            </summary>
+            <param name="property">对象属性</param>
+            <returns>列名</returns>
+        </member>
+        <member name="M:Ideal.Core.Common.Helpers.TableHelper.IsCanMapDataTableToModel(System.Data.DataTable,System.Collections.Generic.IEnumerable{System.Reflection.PropertyInfo})">
+            <summary>
+            校验表格是否能转换为对象
+            </summary>
+            <param name="dataTable">表格</param>
+            <param name="properties">对象属性</param>
+            <returns>是否能转换</returns>
+        </member>
+        <member name="M:Ideal.Core.Common.Helpers.TableHelper.MapRowToModel``1(System.Data.DataRow,``0,System.Collections.Generic.IEnumerable{System.Reflection.PropertyInfo})">
+            <summary>
+            把行数据映射到对象上
+            </summary>
+            <typeparam name="T">类</typeparam>
+            <param name="dataRow">行</param>
+            <param name="model">对象</param>
+            <param name="properties">类的属性集合</param>
+        </member>
     </members>
 </doc>
