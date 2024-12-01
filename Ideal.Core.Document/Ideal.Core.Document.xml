@@ -1,0 +1,220 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Ideal.Core.Document</name>
+    </assembly>
+    <members>
+        <member name="T:Ideal.Core.Document.ExcelHelper">
+            <summary>
+            Excel帮助类 读取
+            </summary>
+            <summary>
+            Excel帮助类 写入
+            </summary>
+            <summary>
+            Excel帮助类
+            </summary>
+        </member>
+        <member name="M:Ideal.Core.Document.ExcelHelper.Read(System.String,System.Boolean,System.String,System.Nullable{System.Int32})">
+            <summary>
+            根据文件路径读取Excel到DataSet
+            指定sheetName，sheetNumber则读取相应工作簿Sheet
+            如果不指定则读取所有工作簿Sheet
+            </summary>
+            <param name="path">Excel文件路径</param>
+            <param name="isFirstRowAsColumnName">是否把第一行数据作为表格列名</param>
+            <param name="sheetName">工作簿名称</param>
+            <param name="sheetNumber">工作簿编号，从 1 开始</param>
+            <returns>DataSet</returns>
+        </member>
+        <member name="M:Ideal.Core.Document.ExcelHelper.Read(System.IO.Stream,System.String,System.Boolean,System.String,System.Nullable{System.Int32})">
+            <summary>
+            根据文件流读取Excel到DataSet
+            指定sheetName，sheetNumber则读取相应工作簿Sheet
+            如果不指定则读取所有工作簿Sheet
+            </summary>
+            <param name="stream">Excel文件流</param>
+            <param name="fileName">Excel文件名称</param>
+            <param name="isFirstRowAsColumnName">是否把第一行数据作为表格列名</param>
+            <param name="sheetName">工作簿名称</param>
+            <param name="sheetNumber">工作簿编号，从 1 开始</param>
+            <returns>DataSet</returns>
+        </member>
+        <member name="M:Ideal.Core.Document.ExcelHelper.Read(System.IO.Stream,System.Boolean,System.Boolean,System.String,System.Nullable{System.Int32})">
+            <summary>
+            根据文件流读取Excel到DataSet
+            指定sheetName，sheetNumber则读取相应工作簿Sheet
+            如果不指定则读取所有工作簿Sheet
+            </summary>
+            <param name="stream">Excel文件流</param>
+            <param name="isXlsx">Excel文件是否是Xlsx后缀</param>
+            <param name="isFirstRowAsColumnName">是否把第一行数据作为表格列名</param>
+            <param name="sheetName">工作簿名称</param>
+            <param name="sheetNumber">工作簿编号，从 1 开始</param>
+            <returns>DataSet</returns>
+        </member>
+        <member name="M:Ideal.Core.Document.ExcelHelper.Read``1(System.String,System.Boolean,System.String,System.Nullable{System.Int32})">
+            <summary>
+            根据文件路径读取Excel到对象集合
+            指定sheetName，sheetNumber则读取相应工作簿Sheet
+            如果不指定则默认读取第一个工作簿Sheet
+            </summary>
+            <param name="path">Excel文件路径</param>
+            <param name="isFirstRowAsColumnName">是否把第一行数据作为表格列名</param>
+            <param name="sheetName">工作簿名称</param>
+            <param name="sheetNumber">工作簿编号，从 1 开始</param>
+            <returns>对象集合</returns>
+            <exception cref="T:System.FormatException">表格中数据类型无法转为对象属性类型</exception>
+        </member>
+        <member name="M:Ideal.Core.Document.ExcelHelper.Read``1(System.IO.Stream,System.String,System.Boolean,System.String,System.Nullable{System.Int32})">
+            <summary>
+            根据文件流读取Excel到对象集合
+            指定sheetName，sheetNumber则读取相应工作簿Sheet
+            如果不指定则默认读取第一个工作簿Sheet
+            </summary>
+            <param name="stream">Excel文件流</param>
+            <param name="fileName">Excel文件名称</param>
+            <param name="isFirstRowAsColumnName">是否把第一行数据作为表格列名</param>
+            <param name="sheetName">工作簿名称</param>
+            <param name="sheetNumber">工作簿编号，从 1 开始</param>
+            <returns>对象集合</returns>
+            <exception cref="T:System.FormatException">表格中数据类型无法转为对象属性类型</exception>
+        </member>
+        <member name="M:Ideal.Core.Document.ExcelHelper.Read``1(System.IO.Stream,System.Boolean,System.Boolean,System.String,System.Nullable{System.Int32})">
+            <summary>
+            根据文件流读取Excel到对象集合
+            指定sheetName，sheetNumber则读取相应工作簿Sheet
+            如果不指定则默认读取第一个工作簿Sheet
+            </summary>
+            <param name="stream">Excel文件流</param>
+            <param name="isXlsx">Excel文件是否是Xlsx后缀</param>
+            <param name="isFirstRowAsColumnName">是否把第一行数据作为表格列名</param>
+            <param name="sheetName">工作簿名称</param>
+            <param name="sheetNumber">工作簿编号，从 1 开始</param>
+            <returns>对象集合</returns>
+            <exception cref="T:System.FormatException">表格中数据类型无法转为对象属性类型</exception>
+        </member>
+        <member name="M:Ideal.Core.Document.ExcelHelper.Write(System.Data.DataTable[],System.Boolean,System.Boolean)">
+            <summary>
+            把表格数组写入Excel文件流
+            </summary>
+            <param name="dataTables">表格数组</param>
+            <param name="isXlsx">Excel文件是否是Xlsx后缀</param>
+            <param name="isColumnNameAsData">表格列名是否作为Excel工作簿第一行数据</param>
+            <returns>MemoryStream</returns>
+        </member>
+        <member name="M:Ideal.Core.Document.ExcelHelper.Write(System.Data.DataTable[],System.String,System.Boolean)">
+            <summary>
+            把表格数组写入Excel文件
+            </summary>
+            <param name="dataTables">表格数组</param>
+            <param name="path">Excel文件路径</param>
+            <param name="isColumnNameAsData">表格列名是否作为Excel工作簿第一行数据</param>
+        </member>
+        <member name="M:Ideal.Core.Document.ExcelHelper.Write``1(System.Collections.Generic.IEnumerable{``0},System.Boolean,System.Boolean,System.String)">
+            <summary>
+            把对象集合写入Excel文件流
+            </summary>
+            <param name="models">对象集合</param>
+            <param name="isXlsx">Excel文件是否是Xlsx后缀</param>
+            <param name="isColumnNameAsData">表格列名是否作为Excel工作簿第一行数据</param>
+            <param name="sheetName">工作簿名称</param>
+            <returns>MemoryStream</returns>
+        </member>
+        <member name="M:Ideal.Core.Document.ExcelHelper.Write``1(System.Collections.Generic.IEnumerable{``0},System.String,System.Boolean,System.String)">
+            <summary>
+            把对象集合写入Excel文件
+            </summary>
+            <param name="models">对象集合</param>
+            <param name="path">Excel文件路径</param>
+            <param name="isColumnNameAsData">表格列名是否作为Excel工作簿第一行数据</param>
+            <param name="sheetName">工作簿名称</param>
+        </member>
+        <member name="M:Ideal.Core.Document.ExcelHelper.CreateDataSetWithStreamOfSheets(System.IO.Stream,System.Boolean,System.Boolean)">
+            <summary>
+            读取所有工作簿Sheet至DataSet
+            </summary>
+            <param name="stream">Excel文件流</param>
+            <param name="isXlsx">Excel文件是否是Xlsx后缀</param>
+            <param name="isFirstRowAsColumnName">是否把第一行数据作为表格列名</param>
+            <returns></returns>
+        </member>
+        <member name="M:Ideal.Core.Document.ExcelHelper.CreateDataSetWithStreamOfSheet(System.IO.Stream,System.Boolean,System.Boolean,System.String,System.Int32)">
+            <summary>
+            读取指定工作簿Sheet至DataSet
+            </summary>
+            <param name="stream">Excel文件流</param>
+            <param name="isXlsx">Excel文件是否是Xlsx后缀</param>
+            <param name="isFirstRowAsColumnName">是否把第一行数据作为表格列名</param>
+            <param name="sheetName">工作簿名称</param>
+            <param name="sheetNumber">工作簿编号，从 1 开始</param>
+            <returns></returns>
+        </member>
+        <member name="M:Ideal.Core.Document.ExcelHelper.CreateWorkbook(System.Boolean,System.IO.Stream)">
+            <summary>
+            根据Excel文件后缀创建IWorkbook
+            </summary>
+            <param name="isXlsx">Excel文件是否是Xlsx后缀</param>
+            <param name="stream">Excel文件流</param>
+            <returns>IWorkbook</returns>
+        </member>
+        <member name="M:Ideal.Core.Document.ExcelHelper.CreateWorkbook(System.Data.DataTable[],System.Boolean,System.Boolean)">
+            <summary>
+            表格数组转为IWorkbook
+            </summary>
+            <param name="dataTables">表格数组</param>
+            <param name="isXlsx">Excel文件是否是Xlsx后缀</param>
+            <param name="isColumnNameAsData">表格列名是否作为Excel工作簿第一行数据</param>
+            <returns>IWorkbook</returns>
+        </member>
+        <member name="M:Ideal.Core.Document.ExcelHelper.CreateFormulaEvaluator(System.Boolean,NPOI.SS.UserModel.IWorkbook)">
+            <summary>
+            根据Excel文件后缀创建公式求值器
+            </summary>
+            <param name="isXlsx">Excel文件是否是Xlsx后缀</param>
+            <param name="workbook">IWorkbook</param>
+            <returns>公式求值器</returns>
+        </member>
+        <member name="M:Ideal.Core.Document.ExcelHelper.CreateDataTableBySheet(NPOI.SS.UserModel.ISheet,NPOI.SS.UserModel.IFormulaEvaluator,System.Boolean)">
+            <summary>
+            工作簿Sheet转换为表格
+            </summary>
+            <param name="sheet">工作簿Sheet</param>
+            <param name="evaluator">公式求值器</param>
+            <param name="isFirstRowAsColumnName">是否把第一行数据作为表格列名</param>
+            <returns>DataTable</returns>
+        </member>
+        <member name="M:Ideal.Core.Document.ExcelHelper.GetMaxColumnNumber(NPOI.SS.UserModel.ISheet)">
+            <summary>
+            获取工作簿Sheet中最大的列数
+            </summary>
+            <param name="sheet">工作簿</param>
+            <returns>最大列数</returns>
+        </member>
+        <member name="M:Ideal.Core.Document.ExcelHelper.FillDataRowBySheetRow(NPOI.SS.UserModel.IRow,NPOI.SS.UserModel.IFormulaEvaluator,System.Data.DataRow)">
+            <summary>
+            通过工作簿sheet行数据填充表格行数据
+            </summary>
+            <param name="row">工作簿sheet行</param>
+            <param name="evaluator">公式求值器</param>
+            <param name="dataRow">表格行</param>
+            <exception cref="T:System.NotSupportedException"></exception>
+        </member>
+        <member name="M:Ideal.Core.Document.ExcelHelper.FillSheetByDataTable(NPOI.SS.UserModel.IWorkbook,System.Data.DataTable,System.Boolean)">
+            <summary>
+            根据表格填充工作簿Sheet
+            </summary>
+            <param name="workbook">IWorkbook</param>
+            <param name="dataTable">表格</param>
+            <param name="isColumnNameAsData">表格列名是否作为Excel工作簿第一行数据</param>
+        </member>
+        <member name="M:Ideal.Core.Document.ExcelHelper.IsXlsxFile(System.String)">
+            <summary>
+            判断Excel文件后缀
+            </summary>
+            <param name="fileName">文件名称</param>
+            <returns>是否是Xlsx格式</returns>
+            <exception cref="T:System.NotSupportedException"></exception>
+        </member>
+    </members>
+</doc>

@@ -8,6 +8,12 @@ namespace Ideal.Core.Common.Test
     /// </summary>
     public partial class DateTimeUnitTest
     {
+        [Fact]
+        public void ToDateTime_Long()
+        {
+            var abc = 123L;
+            var dd = abc.ToLocalTimeTimeBySeconds();
+        }
     }
 
     /// <summary>

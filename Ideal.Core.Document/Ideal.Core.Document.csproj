@@ -1,10 +1,38 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
+		<TargetFramework>net8.0</TargetFramework>
+		<Nullable>enable</Nullable>
+		<PackageId>Ideal.Core.Document</PackageId>
+		<Authors>hugogoos</Authors>
+		<Company>$(Authors)</Company>
+		<Version>8.0.0</Version>
+		<AssemblyVersion>$(Version)</AssemblyVersion>
+		<FileVersion>$(Version)</FileVersion>
+		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+		<GenerateDocumentationFile>True</GenerateDocumentationFile>
+		<DocumentationFile>Ideal.Core.Document.xml</DocumentationFile>
+		<Description>文档组件，该组件用于导入导出Excel表格、PDF文件等文档。</Description>
+		<PackageProjectUrl>https://github.com/hugogoos/Ideal</PackageProjectUrl>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<RepositoryUrl>https://github.com/hugogoos/Ideal</RepositoryUrl>
+		<PackageLicenseFile>LICENSE</PackageLicenseFile>
+		<PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
+		<PackageReadmeFile>Document.md</PackageReadmeFile>
+		<PackageTags>Document;Excel;Pdf;Word;</PackageTags>
+		<Copyright>Copyright © 2024 IT规划师</Copyright>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\docs\Document.md">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+    <None Include="..\LICENSE">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="NPOI" Version="2.7.2" />

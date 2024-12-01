@@ -7,7 +7,7 @@ using System.Data;
 namespace Ideal.Core.Document
 {
     /// <summary>
-    /// Excel帮助类
+    /// Excel帮助类 读取
     /// </summary>
     public static partial class ExcelHelper
     {
@@ -21,7 +21,7 @@ namespace Ideal.Core.Document
         /// <param name="sheetName">工作簿名称</param>
         /// <param name="sheetNumber">工作簿编号，从 1 开始</param>
         /// <returns>DataSet</returns>
-        public static DataSet Read(string path, bool isFirstRowAsColumnName = false, string? sheetName = null, int? sheetNumber = null)
+        public static DataSet Read(string path, bool isFirstRowAsColumnName = true, string? sheetName = null, int? sheetNumber = null)
         {
             using var stream = new FileStream(path, FileMode.Open, FileAccess.Read);
             return Read(stream, IsXlsxFile(path), isFirstRowAsColumnName, sheetName, sheetNumber);
@@ -38,7 +38,7 @@ namespace Ideal.Core.Document
         /// <param name="sheetName">工作簿名称</param>
         /// <param name="sheetNumber">工作簿编号，从 1 开始</param>
         /// <returns>DataSet</returns>
-        public static DataSet Read(Stream stream, string fileName, bool isFirstRowAsColumnName = false, string? sheetName = null, int? sheetNumber = null)
+        public static DataSet Read(Stream stream, string fileName, bool isFirstRowAsColumnName = true, string? sheetName = null, int? sheetNumber = null)
         {
             return Read(stream, IsXlsxFile(fileName), isFirstRowAsColumnName, sheetName, sheetNumber);
         }
@@ -54,12 +54,12 @@ namespace Ideal.Core.Document
         /// <param name="sheetName">工作簿名称</param>
         /// <param name="sheetNumber">工作簿编号，从 1 开始</param>
         /// <returns>DataSet</returns>
-        public static DataSet Read(Stream stream, bool isXlsx, bool isFirstRowAsColumnName = false, string? sheetName = null, int? sheetNumber = null)
+        public static DataSet Read(Stream stream, bool isXlsx, bool isFirstRowAsColumnName = true, string? sheetName = null, int? sheetNumber = null)
         {
             if (sheetName == null && sheetNumber == null)
             {
                 //读取所有工作簿Sheet至DataSet
-                return FillDataSetWithStreamOfSheets(stream, isXlsx, isFirstRowAsColumnName);
+                return CreateDataSetWithStreamOfSheets(stream, isXlsx, isFirstRowAsColumnName);
             }
 
             //读取指定工作簿Sheet至DataSet
@@ -67,7 +67,7 @@ namespace Ideal.Core.Document
         }
 
         /// <summary>
-        /// 根据文件流读取Excel到对象集合
+        /// 根据文件路径读取Excel到对象集合
         /// 指定sheetName，sheetNumber则读取相应工作簿Sheet
         /// 如果不指定则默认读取第一个工作簿Sheet
         /// </summary>
@@ -77,7 +77,7 @@ namespace Ideal.Core.Document
         /// <param name="sheetNumber">工作簿编号，从 1 开始</param>
         /// <returns>对象集合</returns>
         /// <exception cref="FormatException">表格中数据类型无法转为对象属性类型</exception>
-        public static IEnumerable<T> Read<T>(string path, bool isFirstRowAsColumnName = false, string? sheetName = null, int? sheetNumber = null)
+        public static IEnumerable<T> Read<T>(string path, bool isFirstRowAsColumnName = true, string? sheetName = null, int? sheetNumber = null)
         {
             using var stream = new FileStream(path, FileMode.Open, FileAccess.Read);
             return Read<T>(stream, IsXlsxFile(path), isFirstRowAsColumnName, sheetName, sheetNumber);
@@ -95,7 +95,7 @@ namespace Ideal.Core.Document
         /// <param name="sheetNumber">工作簿编号，从 1 开始</param>
         /// <returns>对象集合</returns>
         /// <exception cref="FormatException">表格中数据类型无法转为对象属性类型</exception>
-        public static IEnumerable<T> Read<T>(Stream stream, string fileName, bool isFirstRowAsColumnName = false, string? sheetName = null, int? sheetNumber = null)
+        public static IEnumerable<T> Read<T>(Stream stream, string fileName, bool isFirstRowAsColumnName = true, string? sheetName = null, int? sheetNumber = null)
         {
             return Read<T>(stream, IsXlsxFile(fileName), isFirstRowAsColumnName, sheetName, sheetNumber);
         }
@@ -112,7 +112,7 @@ namespace Ideal.Core.Document
         /// <param name="sheetNumber">工作簿编号，从 1 开始</param>
         /// <returns>对象集合</returns>
         /// <exception cref="FormatException">表格中数据类型无法转为对象属性类型</exception>
-        public static IEnumerable<T> Read<T>(Stream stream, bool isXlsx, bool isFirstRowAsColumnName = false, string? sheetName = null, int? sheetNumber = null)
+        public static IEnumerable<T> Read<T>(Stream stream, bool isXlsx, bool isFirstRowAsColumnName = true, string? sheetName = null, int? sheetNumber = null)
         {
             //读取指定工作簿Sheet至DataSet
             var dataSet = CreateDataSetWithStreamOfSheet(stream, isXlsx, isFirstRowAsColumnName, sheetName, sheetNumber ?? 1);
@@ -124,7 +124,13 @@ namespace Ideal.Core.Document
             //DataTable转对象集合
             return TableHelper.ToModels<T>(dataSet.Tables[0]);
         }
+    }
 
+    /// <summary>
+    /// Excel帮助类 写入
+    /// </summary>
+    public static partial class ExcelHelper
+    {
         /// <summary>
         /// 把表格数组写入Excel文件流
         /// </summary>
@@ -132,7 +138,7 @@ namespace Ideal.Core.Document
         /// <param name="isXlsx">Excel文件是否是Xlsx后缀</param>
         /// <param name="isColumnNameAsData">表格列名是否作为Excel工作簿第一行数据</param>
         /// <returns>MemoryStream</returns>
-        public static MemoryStream Write(DataTable[] dataTables, bool isXlsx, bool isColumnNameAsData)
+        public static MemoryStream Write(DataTable[] dataTables, bool isXlsx, bool isColumnNameAsData = true)
         {
             //表格数组写入Excel对象
             using var workbook = CreateWorkbook(dataTables, isXlsx, isColumnNameAsData);
@@ -148,7 +154,7 @@ namespace Ideal.Core.Document
         /// <param name="dataTables">表格数组</param>
         /// <param name="path">Excel文件路径</param>
         /// <param name="isColumnNameAsData">表格列名是否作为Excel工作簿第一行数据</param>
-        public static void Write(DataTable[] dataTables, string path, bool isColumnNameAsData)
+        public static void Write(DataTable[] dataTables, string path, bool isColumnNameAsData = true)
         {
             //检查文件夹是否存在，不存在则创建
             var directoryName = Path.GetDirectoryName(path);
@@ -180,7 +186,7 @@ namespace Ideal.Core.Document
         /// <param name="isColumnNameAsData">表格列名是否作为Excel工作簿第一行数据</param>
         /// <param name="sheetName">工作簿名称</param>
         /// <returns>MemoryStream</returns>
-        public static MemoryStream Write<T>(IEnumerable<T> models, bool isXlsx, bool isColumnNameAsData, string? sheetName = null)
+        public static MemoryStream Write<T>(IEnumerable<T> models, bool isXlsx, bool isColumnNameAsData = true, string? sheetName = null)
         {
             //对象集合转为表格
             var table = TableHelper.ToDataTable<T>(models, sheetName);
@@ -195,7 +201,7 @@ namespace Ideal.Core.Document
         /// <param name="path">Excel文件路径</param>
         /// <param name="isColumnNameAsData">表格列名是否作为Excel工作簿第一行数据</param>
         /// <param name="sheetName">工作簿名称</param>
-        public static void Write<T>(IEnumerable<T> models, string path, bool isColumnNameAsData, string? sheetName = null)
+        public static void Write<T>(IEnumerable<T> models, string path, bool isColumnNameAsData = true, string? sheetName = null)
         {
             //对象集合转为表格
             var table = TableHelper.ToDataTable<T>(models, sheetName);
@@ -217,7 +223,7 @@ namespace Ideal.Core.Document
         /// <param name="isXlsx">Excel文件是否是Xlsx后缀</param>
         /// <param name="isFirstRowAsColumnName">是否把第一行数据作为表格列名</param>
         /// <returns></returns>
-        private static DataSet FillDataSetWithStreamOfSheets(Stream stream, bool isXlsx, bool isFirstRowAsColumnName)
+        private static DataSet CreateDataSetWithStreamOfSheets(Stream stream, bool isXlsx, bool isFirstRowAsColumnName)
         {
             //根据Excel文件后缀创建IWorkbook
             using var workbook = CreateWorkbook(isXlsx, stream);
@@ -280,6 +286,42 @@ namespace Ideal.Core.Document
         }
 
         /// <summary>
+        /// 根据Excel文件后缀创建IWorkbook
+        /// </summary>
+        /// <param name="isXlsx">Excel文件是否是Xlsx后缀</param>
+        /// <param name="stream">Excel文件流</param>
+        /// <returns>IWorkbook</returns>
+        private static IWorkbook CreateWorkbook(bool isXlsx, Stream? stream = null)
+        {
+            if (stream == null)
+            {
+                return isXlsx ? new XSSFWorkbook() : new HSSFWorkbook();
+            }
+
+            return isXlsx ? new XSSFWorkbook(stream) : new HSSFWorkbook(stream);
+        }
+
+        /// <summary>
+        /// 表格数组转为IWorkbook
+        /// </summary>
+        /// <param name="dataTables">表格数组</param>
+        /// <param name="isXlsx">Excel文件是否是Xlsx后缀</param>
+        /// <param name="isColumnNameAsData">表格列名是否作为Excel工作簿第一行数据</param>
+        /// <returns>IWorkbook</returns>
+        private static IWorkbook CreateWorkbook(DataTable[] dataTables, bool isXlsx, bool isColumnNameAsData)
+        {
+            //根据Excel文件后缀创建IWorkbook
+            var workbook = CreateWorkbook(isXlsx);
+            foreach (var dt in dataTables)
+            {
+                //根据表格填充Sheet
+                FillSheetByDataTable(workbook, dt, isColumnNameAsData);
+            }
+
+            return workbook;
+        }
+
+        /// <summary>
         /// 根据Excel文件后缀创建公式求值器
         /// </summary>
         /// <param name="isXlsx">Excel文件是否是Xlsx后缀</param>
@@ -291,7 +333,7 @@ namespace Ideal.Core.Document
         }
 
         /// <summary>
-        /// 通过Sheet创建表格
+        /// 工作簿Sheet转换为表格
         /// </summary>
         /// <param name="sheet">工作簿Sheet</param>
         /// <param name="evaluator">公式求值器</param>
@@ -300,7 +342,7 @@ namespace Ideal.Core.Document
         private static DataTable CreateDataTableBySheet(ISheet sheet, IFormulaEvaluator evaluator, bool isFirstRowAsColumnName)
         {
             var dataTable = new DataTable(sheet.SheetName);
-            //获取Sheet中最大的列数，并以此数为新的表格列数
+            //获取工作簿Sheet中最大的列数，并以此数为新的表格列数
             var maxColumnNumber = GetMaxColumnNumber(sheet);
             if (isFirstRowAsColumnName)
             {
@@ -356,6 +398,28 @@ namespace Ideal.Core.Document
         }
 
         /// <summary>
+        /// 获取工作簿Sheet中最大的列数
+        /// </summary>
+        /// <param name="sheet">工作簿</param>
+        /// <returns>最大列数</returns>
+        private static int GetMaxColumnNumber(ISheet sheet)
+        {
+            var maxColumnNumber = 0;
+            //在有效的行数据中
+            for (var i = sheet.FirstRowNum; i <= sheet.LastRowNum; i++)
+            {
+                var row = sheet.GetRow(i);
+                //找到最大的列编号
+                if (row != null && row.LastCellNum > maxColumnNumber)
+                {
+                    maxColumnNumber = row.LastCellNum;
+                }
+            }
+
+            return maxColumnNumber;
+        }
+
+        /// <summary>
         /// 通过工作簿sheet行数据填充表格行数据
         /// </summary>
         /// <param name="row">工作簿sheet行</param>
@@ -402,68 +466,10 @@ namespace Ideal.Core.Document
                             dataRow[j] = evaluator.EvaluateInCell(cell).ToString();
                             break;
                         default:
-                            throw new NotSupportedException("不支持该枚举值");
+                            throw new NotSupportedException("Unsupported cell type.");
                     }
                 }
             }
-        }
-
-        /// <summary>
-        /// 获取工作簿Sheet中最大的列数
-        /// </summary>
-        /// <param name="sheet">工作簿</param>
-        /// <returns>最大列数</returns>
-        private static int GetMaxColumnNumber(ISheet sheet)
-        {
-            var maxColumnNumber = 0;
-            //在有效的行数据中
-            for (var i = sheet.FirstRowNum; i <= sheet.LastRowNum; i++)
-            {
-                var row = sheet.GetRow(i);
-                //找到最大的列编号
-                if (row != null && row.LastCellNum > maxColumnNumber)
-                {
-                    maxColumnNumber = row.LastCellNum;
-                }
-            }
-
-            return maxColumnNumber;
-        }
-
-        /// <summary>
-        /// 根据Excel文件后缀创建IWorkbook
-        /// </summary>
-        /// <param name="isXlsx">Excel文件是否是Xlsx后缀</param>
-        /// <param name="stream">Excel文件流</param>
-        /// <returns>IWorkbook</returns>
-        private static IWorkbook CreateWorkbook(bool isXlsx, Stream? stream = null)
-        {
-            if (stream == null)
-            {
-                return isXlsx ? new XSSFWorkbook() : new HSSFWorkbook();
-            }
-
-            return isXlsx ? new XSSFWorkbook(stream) : new HSSFWorkbook(stream);
-        }
-
-        /// <summary>
-        /// 填充IWorkbook
-        /// </summary>
-        /// <param name="dataTables">表格数组</param>
-        /// <param name="isXlsx">Excel文件是否是Xlsx后缀</param>
-        /// <param name="isColumnNameAsData">表格列名是否作为Excel工作簿第一行数据</param>
-        /// <returns>IWorkbook</returns>
-        private static IWorkbook CreateWorkbook(DataTable[] dataTables, bool isXlsx, bool isColumnNameAsData)
-        {
-            //根据Excel文件后缀创建IWorkbook
-            var workbook = CreateWorkbook(isXlsx);
-            foreach (var dt in dataTables)
-            {
-                //根据表格填充Sheet
-                FillSheetByDataTable(workbook, dt, isColumnNameAsData);
-            }
-
-            return workbook;
         }
 
         /// <summary>

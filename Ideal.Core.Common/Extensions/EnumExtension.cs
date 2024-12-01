@@ -997,7 +997,7 @@ namespace Ideal.Core.Common.Extensions
     }
 
 
-    #region 枚举值转枚举
+    #region 枚举值转换
 
     /// <summary>
     /// 枚举相关扩展方法（sbyte类型）

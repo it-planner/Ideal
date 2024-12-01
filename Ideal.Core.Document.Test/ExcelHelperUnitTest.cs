@@ -20,7 +20,6 @@ namespace Ideal.Core.Document.Test
             Assert.Equal("D", table1.Rows[1][1]);
             Assert.Equal("2", table1.Rows[1][2]);
 
-
             //读取所有工作簿，并且首行数据作为表头
             dataSet = ExcelHelper.Read("Read.xlsx", true);
             Assert.Equal(3, dataSet.Tables.Count);
@@ -34,12 +33,12 @@ namespace Ideal.Core.Document.Test
             Assert.Equal("H", table1.Rows[0][1]);
             Assert.Equal("4", table1.Rows[0][2]);
 
-            //根据工作簿名称读取指定工作簿
+            //根据工作簿名称sheetName读取指定工作簿
             dataSet = ExcelHelper.Read("Read.xlsx", true, "Sheet2");
             Assert.Single(dataSet.Tables);
             Assert.Equal("Sheet2", dataSet.Tables[0].TableName);
 
-            //通过sheetName读取不存在的工作簿
+            //通过工作簿名称sheetName读取不存在的工作簿
             dataSet = ExcelHelper.Read("Read.xlsx", true, "Sheet99");
             Assert.Empty(dataSet.Tables);
 
@@ -48,11 +47,11 @@ namespace Ideal.Core.Document.Test
             Assert.Single(dataSet.Tables);
             Assert.Equal("Sheet1", dataSet.Tables[0].TableName);
 
-            //通过sheetNumber读取不存在的工作簿
+            //通过工作簿编号sheetNumber读取不存在的工作簿
             dataSet = ExcelHelper.Read("Read.xlsx", true, null, 99);
             Assert.Empty(dataSet.Tables);
 
-            //通过sheetNumber读取指定工作簿
+            //通过工作簿编号sheetNumber读取指定工作簿
             dataSet = ExcelHelper.Read("Read.xlsx", true, null, 1);
             Assert.Single(dataSet.Tables);
             Assert.Equal("Sheet1", dataSet.Tables[0].TableName);
